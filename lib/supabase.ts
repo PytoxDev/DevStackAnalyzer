@@ -1,14 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-project.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  if (typeof window === 'undefined') {
-    console.warn(
-      'Warning: Supabase environment variables (NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY) are not set. Using placeholder values for build and initialization.'
-    );
-  }
+// Якщо хоч однієї змінної немає, миттєво зупиняємо роботу і підсвічуємо проблему
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    `❌ Supabase Critical Error: Missing environment variables inside .env.local!
+     Make sure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set properly.`
+  );
 }
 
+// Створюємо єдиний чистий екземпляр для всього фронтенду
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

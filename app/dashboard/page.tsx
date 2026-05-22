@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShieldAlert, Sparkles, TrendingUp, ArrowUpRight, GitBranch, Lock, Cpu } from 'lucide-react';
+import { ShieldAlert, Sparkles, TrendingUp, ArrowUpRight, GitBranch, Lock } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
 
@@ -104,7 +104,11 @@ export default function DashboardPage() {
       <main className="flex-1 flex flex-col overflow-y-auto">
         <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md transition-colors duration-300">
           <div className="flex items-center gap-2 md:hidden">
-            <Cpu className="w-5 h-5 text-indigo-600 dark:text-indigo-500" />
+            <img 
+              src="/DevStack.png" 
+              alt="DevStack Logo" 
+              className="w-8 h-8 rounded-lg object-contain" 
+            />
             <span className="font-bold text-md text-slate-900 dark:text-white">Dev-Stack</span>
           </div>
           <div className="text-sm text-slate-500 dark:text-slate-400 hidden md:block">

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  Cpu, 
   Search, 
   Filter, 
   Calendar, 
@@ -145,9 +144,17 @@ export default function HistoryPage() {
     async function fetchHistory() {
       try {
         setIsLoading(true);
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from('analysis_history')
           .select('*')
+          .eq('user_id', user.id)
           .order('analyzed_at', { ascending: false });
 
         if (error) {
@@ -299,7 +306,12 @@ export default function HistoryPage() {
 
   const filteredHistory = historyList.filter(scan => 
     scan.repo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    scan.stack.some(tech => tech.toLowerCase().includes(searchTerm.toLowerCase()))
+    scan.stack.some(tech => {
+      const name = typeof tech === 'object' && tech !== null && 'tech' in tech
+        ? (tech as any).tech
+        : String(tech);
+      return name.toLowerCase().includes(searchTerm.toLowerCase());
+    })
   );
 
   return (
@@ -312,7 +324,11 @@ export default function HistoryPage() {
         {/* Top Header */}
         <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md">
           <div className="flex items-center gap-2 md:hidden">
-            <Cpu className="w-5 h-5 text-indigo-500" />
+            <img 
+              src="/DevStack.png" 
+              alt="DevStack Logo" 
+              className="w-8 h-8 rounded-lg object-contain" 
+            />
             <span className="font-bold text-md">Dev-Stack</span>
           </div>
           <div className="text-sm text-slate-550 dark:text-slate-400 hidden md:block">
@@ -387,14 +403,20 @@ export default function HistoryPage() {
                       </div>
 
                       <div className="flex flex-wrap gap-1.5">
-                        {scan.stack.map((tech) => (
-                          <span 
-                            key={tech} 
-                            className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-indigo-600 dark:text-indigo-400 text-xs rounded-full font-medium"
-                          >
-                            {tech}
-                          </span>
-                        ))}
+                        {Array.isArray(scan.stack) && scan.stack.map((techItem, index) => {
+                          const techName = typeof techItem === 'object' && techItem !== null && 'tech' in techItem
+                            ? (techItem as any).tech
+                            : String(techItem);
+
+                          return (
+                            <span
+                              key={`${techName}-${index}`}
+                              className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-indigo-600 dark:text-indigo-400 text-xs rounded-full font-medium"
+                            >
+                              {techName}
+                            </span>
+                          );
+                        })}
                       </div>
 
                       <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
@@ -461,14 +483,20 @@ export default function HistoryPage() {
                   <div className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Detected Technologies</h4>
                     <div className="flex flex-wrap gap-1.5">
-                      {selectedScan.stack.map((tech) => (
-                        <span 
-                          key={tech} 
-                          className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-indigo-600 dark:text-indigo-400 text-xs rounded-full font-semibold"
-                        >
-                          {tech}
-                        </span>
-                      ))}
+                      {Array.isArray(selectedScan.stack) && selectedScan.stack.map((techItem, index) => {
+                        const techName = typeof techItem === 'object' && techItem !== null && 'tech' in techItem
+                          ? (techItem as any).tech
+                          : String(techItem);
+
+                        return (
+                          <span
+                            key={`${techName}-${index}`}
+                            className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-indigo-600 dark:text-indigo-400 text-xs rounded-full font-semibold"
+                          >
+                            {techName}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
 

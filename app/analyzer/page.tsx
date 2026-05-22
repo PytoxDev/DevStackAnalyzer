@@ -9,7 +9,6 @@ import remarkGfm from 'remark-gfm';
 import { motion } from 'framer-motion';
 import { 
   BarChart3, 
-  Cpu, 
   History, 
   LayoutDashboard, 
   LogOut, 
@@ -421,14 +420,14 @@ export default function AnalyzerPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          await supabase.from('analysis_history').upsert([
+          await supabase.from('analysis_history').insert([
             {
               user_id: user.id,
-              repository_url: repoUrl,
-              detected_stack: finalResult.detectedStack,
-              ai_insights: finalResult.aiInsights
+              repository_url: repoUrl || "AI Consultation",
+              detected_stack: finalResult.detectedStack || [],
+              ai_insights: finalResult.aiInsights || ""
             }
-          ], { onConflict: 'repository_url' });
+          ]);
         }
       } catch (dbErr) {
         console.error('Error saving history to database:', dbErr);
@@ -453,14 +452,14 @@ export default function AnalyzerPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          await supabase.from('analysis_history').upsert([
+          await supabase.from('analysis_history').insert([
             {
               user_id: user.id,
-              repository_url: repoUrl,
-              detected_stack: fallbackResult.detectedStack,
-              ai_insights: fallbackResult.aiInsights
+              repository_url: repoUrl || "AI Consultation",
+              detected_stack: fallbackResult.detectedStack || [],
+              ai_insights: fallbackResult.aiInsights || ""
             }
-          ], { onConflict: 'repository_url' });
+          ]);
         }
       } catch (dbErr) {
         console.error('Error saving history to database:', dbErr);
@@ -501,14 +500,17 @@ export default function AnalyzerPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          await supabase.from('analysis_history').upsert([
+          const formattedTitle = promptInput.length > 45
+            ? promptInput.slice(0, 45) + '...'
+            : promptInput;
+          await supabase.from('analysis_history').insert([
             {
               user_id: user.id,
-              repository_url: `AI Consult: ${promptInput}`,
-              detected_stack: finalResponse.techBreakdownData,
-              ai_insights: finalResponse.markdownResponse
+              repository_url: `AI Consult: ${formattedTitle}`,
+              detected_stack: finalResponse.techBreakdownData || [],
+              ai_insights: finalResponse.markdownResponse || ""
             }
-          ], { onConflict: 'repository_url' });
+          ]);
         }
       } catch (dbErr) {
         console.error('Error saving consult history to database:', dbErr);
@@ -526,14 +528,17 @@ export default function AnalyzerPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          await supabase.from('analysis_history').upsert([
+          const formattedTitle = promptInput.length > 45
+            ? promptInput.slice(0, 45) + '...'
+            : promptInput;
+          await supabase.from('analysis_history').insert([
             {
               user_id: user.id,
-              repository_url: `AI Consult: ${promptInput}`,
-              detected_stack: fallbackResponse.techBreakdownData,
-              ai_insights: fallbackResponse.markdownResponse
+              repository_url: `AI Consult: ${formattedTitle}`,
+              detected_stack: fallbackResponse.techBreakdownData || [],
+              ai_insights: fallbackResponse.markdownResponse || ""
             }
-          ], { onConflict: 'repository_url' });
+          ]);
         }
       } catch (dbErr) {
         console.error('Error saving consult history to database:', dbErr);
@@ -555,7 +560,11 @@ export default function AnalyzerPage() {
         {/* Header */}
         <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md transition-colors duration-300">
           <div className="flex items-center gap-2 md:hidden">
-            <Cpu className="w-5 h-5 text-indigo-600 dark:text-indigo-500" />
+            <img 
+              src="/DevStack.png" 
+              alt="DevStack Logo" 
+              className="w-8 h-8 rounded-lg object-contain" 
+            />
             <span className="font-bold text-md text-slate-900 dark:text-white">Dev-Stack</span>
           </div>
           <div className="text-sm text-slate-550 dark:text-slate-400 hidden md:block">

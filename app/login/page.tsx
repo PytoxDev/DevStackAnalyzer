@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Sparkles, Cpu, ArrowRight, AlertCircle, UserPlus, LogIn } from 'lucide-react';
+import { Shield, Sparkles, ArrowRight, AlertCircle, UserPlus, LogIn } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 type Mode = 'signin' | 'signup';
@@ -60,9 +60,11 @@ export default function LoginPage() {
 
         {/* Branding header */}
         <div className="flex flex-col items-center mb-8">
-          <div className="p-3 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl shadow-lg shadow-indigo-500/20 mb-4">
-            <Cpu className="w-8 h-8 text-white animate-pulse" />
-          </div>
+          <img 
+            src="/DevStack.png" 
+            alt="DevStack Logo" 
+            className="w-12 h-12 rounded-xl object-contain mb-4" 
+          />
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
             Dev-Stack Analyzer
           </h1>

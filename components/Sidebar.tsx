@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BarChart3, Cpu, History, LayoutDashboard, LogOut, User, Sun, Moon } from 'lucide-react';
+import { BarChart3, History, LayoutDashboard, LogOut, User, Sun, Moon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -67,9 +67,11 @@ export default function Sidebar() {
       <div>
         {/* Logo */}
         <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="p-2 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg shadow-lg shadow-indigo-500/20">
-            <Cpu className="w-5 h-5 text-white" />
-          </div>
+          <img 
+            src="/DevStack.png" 
+            alt="DevStack Logo" 
+            className="w-8 h-8 rounded-lg object-contain" 
+          />
           <span className="font-extrabold text-lg bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
             Dev-Stack
           </span>
