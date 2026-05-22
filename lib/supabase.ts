@@ -11,5 +11,4 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Створюємо єдиний чистий екземпляр для всього фронтенду
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
