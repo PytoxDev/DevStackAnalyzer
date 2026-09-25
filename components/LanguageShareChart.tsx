@@ -12,7 +12,7 @@ interface LanguageShareChartProps {
   data: LanguageData[];
 }
 
-const COLORS = ['#6366f1', '#a855f7', '#3b82f6', '#10b981', '#f59e0b'];
+const COLORS = ['#2563eb', '#10b981', '#0284c7', '#0d9488', '#f59e0b'];
 
 export default function LanguageShareChart({ data }: LanguageShareChartProps) {
   return (
@@ -24,14 +24,14 @@ export default function LanguageShareChart({ data }: LanguageShareChartProps) {
           <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} dx={-8} />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#0f172a',
+              backgroundColor: '#020617',
               border: '1px solid #1e293b',
               borderRadius: '10px',
               color: '#f8fafc',
               fontSize: '12px'
             }}
           />
-          <Bar dataKey="value" fill="#6366f1" radius={[6, 6, 0, 0]} maxBarSize={40}>
+          <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} maxBarSize={40}>
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}

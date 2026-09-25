@@ -120,6 +120,7 @@ function MarkdownContent({ text }: { text: string }) {
 export default function HistoryPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedScan, setSelectedScan] = useState<HistoricalScan | null>(null);
   
@@ -128,6 +129,13 @@ export default function HistoryPage() {
 
   // ── Route guard ───────────────────────────────────────────────────────────
   useEffect(() => {
+    const guestFlag = localStorage.getItem('devstack_guest') === 'true';
+    if (guestFlag) {
+      setIsGuest(true);
+      setAuthChecked(true);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
         router.replace('/login');
@@ -144,22 +152,6 @@ export default function HistoryPage() {
     async function fetchHistory() {
       try {
         setIsLoading(true);
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from('analysis_history')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('analyzed_at', { ascending: false });
-
-        if (error) {
-          console.error('Error fetching historical records:', error);
-        }
 
         const staticTemplates: HistoricalScan[] = [
           {
@@ -193,6 +185,30 @@ export default function HistoryPage() {
             recommendations: ['Audit RxJS stream error-handlers', 'Verify HTTP/2 Fastify performance metrics']
           }
         ];
+
+        // In guest mode, do not attempt to read personal user records
+        if (isGuest || localStorage.getItem('devstack_guest') === 'true') {
+          setHistoryList(staticTemplates);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setHistoryList(staticTemplates);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('analysis_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('analyzed_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching historical records:', error);
+        }
 
         const fetchedRecords: HistoricalScan[] = (data || []).map((row: any) => {
           const isConsult = row.repository_url?.startsWith('AI Consult: ');
@@ -294,11 +310,11 @@ export default function HistoryPage() {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-slate-500 dark:text-slate-400">
-          <div className="p-4 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl border border-indigo-500/20">
-            <Lock className="w-8 h-8 text-indigo-500 dark:text-indigo-400 animate-pulse" />
+          <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+            <Lock className="w-8 h-8 text-blue-500 dark:text-blue-400 animate-pulse" />
           </div>
           <p className="text-sm font-medium tracking-wide">Securing workspace&hellip;</p>
-          <span className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -332,13 +348,13 @@ export default function HistoryPage() {
             <span className="font-bold text-md">Dev-Stack</span>
           </div>
           <div className="text-sm text-slate-550 dark:text-slate-400 hidden md:block">
-            Historical Scan Registers &bull; <span className="text-indigo-600 dark:text-indigo-400 font-semibold">Total Scans: {historyList.length}</span>
+            Historical Scan Registers &bull; <span className="text-blue-600 dark:text-blue-400 font-semibold">Total Scans: {historyList.length}</span>
           </div>
           
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 p-1.5 px-3 bg-slate-200/65 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-full text-xs">
-              <span className="w-2 h-2 bg-indigo-550 dark:bg-indigo-500 rounded-full animate-pulse" />
-              <span className="text-slate-700 dark:text-slate-350">History Sync Active</span>
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-slate-700 dark:text-slate-350">{isGuest ? 'Guest Session' : 'History Sync Active'}</span>
             </div>
           </div>
         </header>
@@ -352,6 +368,16 @@ export default function HistoryPage() {
             </p>
           </div>
 
+          {/* Guest Mode Informational Banner */}
+          {isGuest && (
+            <div className="p-4 bg-blue-500/10 border border-blue-500/25 rounded-xl text-xs text-blue-600 dark:text-blue-300 flex items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
+              <span>
+                <strong>Гостьовий режим активний:</strong> ваші нові сканування не записуються до хмарної бази даних. Нижче відображено демонстраційні звіти для ознайомлення з форматом аналітики.
+              </span>
+            </div>
+          )}
+
           {/* Search/Filter Toolbar */}
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="relative w-full md:max-w-md">
@@ -363,12 +389,12 @@ export default function HistoryPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search repository name or technology..."
-                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-805 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all duration-300"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-805 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300"
               />
             </div>
 
             <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-900 border border-slate-300 dark:border-slate-850 p-2.5 px-4 rounded-lg select-none">
-              <Filter className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <Filter className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span>Filter: All Completed Scans</span>
             </div>
           </div>
@@ -377,7 +403,7 @@ export default function HistoryPage() {
           <div className="grid grid-cols-1 gap-4">
             {isLoading ? (
               <div className="p-12 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
-                <span className="w-8 h-8 border-4 border-indigo-650 dark:border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                <span className="w-8 h-8 border-4 border-blue-600 dark:border-blue-500 border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm font-medium">Fetching analysis history...</span>
               </div>
             ) : (
@@ -411,7 +437,7 @@ export default function HistoryPage() {
                           return (
                             <span
                               key={`${techName}-${index}`}
-                              className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-indigo-600 dark:text-indigo-400 text-xs rounded-full font-medium"
+                              className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-blue-600 dark:text-blue-400 text-xs rounded-full font-medium"
                             >
                               {techName}
                             </span>
@@ -435,7 +461,7 @@ export default function HistoryPage() {
 
                       <button
                         onClick={() => setSelectedScan(scan)}
-                        className="px-4 py-2.5 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold rounded-lg text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer transition-all duration-200"
+                        className="px-4 py-2.5 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-semibold rounded-lg text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 cursor-pointer transition-all duration-200"
                       >
                         View Report
                       </button>
@@ -491,7 +517,7 @@ export default function HistoryPage() {
                         return (
                           <span
                             key={`${techName}-${index}`}
-                            className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-indigo-600 dark:text-indigo-400 text-xs rounded-full font-semibold"
+                            className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 text-blue-600 dark:text-blue-400 text-xs rounded-full font-semibold"
                           >
                             {techName}
                           </span>
@@ -502,7 +528,7 @@ export default function HistoryPage() {
 
                   <div className="space-y-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400 flex items-center gap-1.5 mb-1">
-                      <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <FileText className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                       Gemini Synthesis Insights
                     </h4>
                     <div className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-300">
@@ -527,7 +553,7 @@ export default function HistoryPage() {
                 <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex justify-end">
                   <button 
                     onClick={() => setSelectedScan(null)}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-lg cursor-pointer transition-colors"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-lg cursor-pointer transition-colors"
                   >
                     Close Report
                   </button>

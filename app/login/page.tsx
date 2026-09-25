@@ -51,9 +51,9 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-slate-950 text-slate-100 overflow-hidden font-sans">
       {/* Background Gradients & Glows */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950 z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-950/40 via-slate-950 to-slate-950 z-0" />
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Glassmorphic Container */}
       <div className="relative z-10 w-full max-w-md p-8 mx-4 bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl">
@@ -80,7 +80,7 @@ export default function LoginPage() {
             onClick={() => resetState('signin')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
               isSignIn
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -92,7 +92,7 @@ export default function LoginPage() {
             onClick={() => resetState('signup')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
               !isSignIn
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -102,11 +102,11 @@ export default function LoginPage() {
         </div>
 
         {/* Auth Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
 
           {/* Error alert */}
           {error && (
-            <div className="flex items-start gap-3 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-sm text-rose-400 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-start gap-3 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400 animate-in fade-in slide-in-from-top-2 duration-300">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
@@ -129,7 +129,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="developer@devstack.com"
-              className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-300"
+              className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
               required
             />
           </div>
@@ -140,7 +140,7 @@ export default function LoginPage() {
                 Password
               </label>
               {isSignIn && (
-                <a href="#" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                <a href="#" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
                   Forgot password?
                 </a>
               )}
@@ -151,7 +151,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               minLength={6}
-              className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-300"
+              className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
               required
             />
             {!isSignIn && (
@@ -162,7 +162,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="group relative w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-lg shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="group relative w-full py-3.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white font-semibold rounded-lg shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -175,16 +175,36 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {/* Guest Mode Divider & Button */}
+        <div className="mt-5 pt-4 border-t border-slate-800/80">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('devstack_guest', 'true');
+              }
+              router.push('/dashboard');
+            }}
+            className="w-full py-3 px-4 bg-slate-950/90 hover:bg-slate-800/90 border border-slate-700/80 hover:border-emerald-500/50 text-slate-200 hover:text-emerald-400 font-medium text-sm rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md group"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 group-hover:animate-ping" />
+            <span>Продовжити в гостьовому режимі (Guest Access)</span>
+          </button>
+          <p className="text-[11px] text-slate-500 text-center mt-2">
+            Вхід без авторизації. Історія ваших запитів не буде зберігатися.
+          </p>
+        </div>
+
         {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-slate-800/80 text-center">
+        <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
           <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-indigo-400" />
+              <Shield className="w-3.5 h-3.5 text-blue-400" />
               Supabase Auth
             </span>
             <span className="w-1.5 h-1.5 bg-slate-800 rounded-full" />
             <span className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
               Gemini AI Powered
             </span>
           </div>

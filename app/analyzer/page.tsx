@@ -194,13 +194,13 @@ function ArchitectureEvidencePanel({
   popularityTrendData: PopularityTrendEntry[] | null;
 }) {
   const CHART_COLORS = [
-    '#6366f1', // Indigo
-    '#a855f7', // Purple
+    '#2563eb', // Blue
     '#10b981', // Emerald
+    '#0284c7', // Sky
+    '#0d9488', // Teal
+    '#06b6d4', // Cyan
     '#f59e0b', // Amber
-    '#3b82f6', // Blue
-    '#ec4899', // Pink
-    '#14b8a6', // Teal
+    '#3b82f6', // Bright Blue
   ];
 
   const techColors = techBreakdownData.reduce((acc, entry, index) => {
@@ -326,10 +326,18 @@ function ArchitectureEvidencePanel({
 export default function AnalyzerPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const [activeTab, setActiveTab] = useState<'scan' | 'chat'>('scan');
 
   // ── Route guard ───────────────────────────────────────────────────────────
   useEffect(() => {
+    const guestFlag = localStorage.getItem('devstack_guest') === 'true';
+    if (guestFlag) {
+      setIsGuest(true);
+      setAuthChecked(true);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
         router.replace('/login');
@@ -365,11 +373,11 @@ export default function AnalyzerPage() {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-slate-500 dark:text-slate-400">
-          <div className="p-4 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl border border-indigo-500/20">
-            <Lock className="w-8 h-8 text-indigo-500 dark:text-indigo-400 animate-pulse" />
+          <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+            <Lock className="w-8 h-8 text-blue-500 dark:text-blue-400 animate-pulse" />
           </div>
           <p className="text-sm font-medium tracking-wide">Securing workspace&hellip;</p>
-          <span className="w-6 h-6 border-2 border-indigo-650 dark:border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span className="w-6 h-6 border-2 border-blue-600 dark:border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -390,7 +398,7 @@ export default function AnalyzerPage() {
       'Parsing package manifests and dependency trees...',
       'Scanning for API tokens and raw secrets...',
       'Formulating Gemini context payload...',
-      'Consulting Gemini 3.5 Flash for architectural insights...',
+      'Consulting Gemini 3.8 Flash for architectural insights...',
     ];
 
     for (let i = 0; i < steps.length; i++) {
@@ -417,20 +425,23 @@ export default function AnalyzerPage() {
       };
       setResult(finalResult);
 
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase.from('analysis_history').insert([
-            {
-              user_id: user.id,
-              repository_url: repoUrl || "AI Consultation",
-              detected_stack: finalResult.detectedStack || [],
-              ai_insights: finalResult.aiInsights || ""
-            }
-          ]);
+      // Do NOT persist if guest mode!
+      if (!isGuest && localStorage.getItem('devstack_guest') !== 'true') {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from('analysis_history').insert([
+              {
+                user_id: user.id,
+                repository_url: repoUrl || "AI Consultation",
+                detected_stack: finalResult.detectedStack || [],
+                ai_insights: finalResult.aiInsights || ""
+              }
+            ]);
+          }
+        } catch (dbErr) {
+          console.error('Error saving history to database:', dbErr);
         }
-      } catch (dbErr) {
-        console.error('Error saving history to database:', dbErr);
       }
     } catch {
       console.warn('API error. Falling back to simulated mock insights.');
@@ -449,20 +460,23 @@ export default function AnalyzerPage() {
       };
       setResult(fallbackResult);
 
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase.from('analysis_history').insert([
-            {
-              user_id: user.id,
-              repository_url: repoUrl || "AI Consultation",
-              detected_stack: fallbackResult.detectedStack || [],
-              ai_insights: fallbackResult.aiInsights || ""
-            }
-          ]);
+      // Do NOT persist if guest mode!
+      if (!isGuest && localStorage.getItem('devstack_guest') !== 'true') {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from('analysis_history').insert([
+              {
+                user_id: user.id,
+                repository_url: repoUrl || "AI Consultation",
+                detected_stack: fallbackResult.detectedStack || [],
+                ai_insights: fallbackResult.aiInsights || ""
+              }
+            ]);
+          }
+        } catch (dbErr) {
+          console.error('Error saving history to database:', dbErr);
         }
-      } catch (dbErr) {
-        console.error('Error saving history to database:', dbErr);
       }
     } finally {
       setIsLoading(false);
@@ -497,23 +511,26 @@ export default function AnalyzerPage() {
       };
       setConsultResponse(finalResponse);
 
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const formattedTitle = promptInput.length > 45
-            ? promptInput.slice(0, 45) + '...'
-            : promptInput;
-          await supabase.from('analysis_history').insert([
-            {
-              user_id: user.id,
-              repository_url: `AI Consult: ${formattedTitle}`,
-              detected_stack: finalResponse.techBreakdownData || [],
-              ai_insights: finalResponse.markdownResponse || ""
-            }
-          ]);
+      // Do NOT persist if guest mode!
+      if (!isGuest && localStorage.getItem('devstack_guest') !== 'true') {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const formattedTitle = promptInput.length > 45
+              ? promptInput.slice(0, 45) + '...'
+              : promptInput;
+            await supabase.from('analysis_history').insert([
+              {
+                user_id: user.id,
+                repository_url: `AI Consult: ${formattedTitle}`,
+                detected_stack: finalResponse.techBreakdownData || [],
+                ai_insights: finalResponse.markdownResponse || ""
+              }
+            ]);
+          }
+        } catch (dbErr) {
+          console.error('Error saving consult history to database:', dbErr);
         }
-      } catch (dbErr) {
-        console.error('Error saving consult history to database:', dbErr);
       }
     } catch (err: any) {
       console.error(err);
@@ -525,23 +542,26 @@ export default function AnalyzerPage() {
       };
       setConsultResponse(fallbackResponse);
 
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const formattedTitle = promptInput.length > 45
-            ? promptInput.slice(0, 45) + '...'
-            : promptInput;
-          await supabase.from('analysis_history').insert([
-            {
-              user_id: user.id,
-              repository_url: `AI Consult: ${formattedTitle}`,
-              detected_stack: fallbackResponse.techBreakdownData || [],
-              ai_insights: fallbackResponse.markdownResponse || ""
-            }
-          ]);
+      // Do NOT persist if guest mode!
+      if (!isGuest && localStorage.getItem('devstack_guest') !== 'true') {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const formattedTitle = promptInput.length > 45
+              ? promptInput.slice(0, 45) + '...'
+              : promptInput;
+            await supabase.from('analysis_history').insert([
+              {
+                user_id: user.id,
+                repository_url: `AI Consult: ${formattedTitle}`,
+                detected_stack: fallbackResponse.techBreakdownData || [],
+                ai_insights: fallbackResponse.markdownResponse || ""
+              }
+            ]);
+          }
+        } catch (dbErr) {
+          console.error('Error saving consult history to database:', dbErr);
         }
-      } catch (dbErr) {
-        console.error('Error saving consult history to database:', dbErr);
       }
     } finally {
       setIsChatLoading(false);
@@ -568,11 +588,11 @@ export default function AnalyzerPage() {
             <span className="font-bold text-md text-slate-900 dark:text-white">Dev-Stack</span>
           </div>
           <div className="text-sm text-slate-550 dark:text-slate-400 hidden md:block">
-            Stack Analysis Engine &bull; <span className="text-indigo-600 dark:text-indigo-400 font-medium">Gemini-Powered</span>
+            Stack Analysis Engine &bull; <span className="text-blue-600 dark:text-blue-400 font-medium">Gemini-Powered</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 p-1.5 px-3 bg-slate-200/60 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-full text-xs text-slate-700 dark:text-slate-300">
-              <span className="w-2 h-2 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
+              <span className="w-2 h-2 bg-emerald-500 rounded-full" />
               <span>Analyzer Online</span>
             </div>
           </div>
@@ -598,14 +618,14 @@ export default function AnalyzerPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('scan')}
-                  className={`px-4 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeTab === 'scan' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                  className={`px-4 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeTab === 'scan' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
                   Repository Scan
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('chat')}
-                  className={`px-4 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeTab === 'chat' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                  className={`px-4 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer ${activeTab === 'chat' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}
                 >
                   AI Architecture Consultant
                 </button>
@@ -650,9 +670,9 @@ export default function AnalyzerPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-555 dark:text-slate-400 mb-2">Engine Priority</label>
-                      <div className="px-3.5 py-3 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/50 rounded-lg text-xs text-indigo-650 dark:text-indigo-400 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-purple-650 dark:text-purple-400" />
-                        Gemini 3.5 Flash
+                      <div className="px-3.5 py-3 bg-slate-100/50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/50 rounded-lg text-xs text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                        Gemini 3.8 Flash
                       </div>
                     </div>
                   </div>
@@ -666,7 +686,7 @@ export default function AnalyzerPage() {
                             type="checkbox"
                             checked={targetAreas[area]}
                             onChange={(e) => setTargetAreas({ ...targetAreas, [area]: e.target.checked })}
-                            className="rounded border-slate-350 dark:border-slate-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-white dark:focus:ring-offset-slate-950"
+                            className="rounded border-slate-350 dark:border-slate-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-slate-950"
                             disabled={isLoading}
                           />
                           <span className="text-xs text-slate-700 dark:text-slate-300 capitalize">{area === 'codeQuality' ? 'Code Quality' : area === 'secrets' ? 'Secret Leaks' : area.charAt(0).toUpperCase() + area.slice(1)}</span>
@@ -678,7 +698,7 @@ export default function AnalyzerPage() {
                   <button
                     type="submit"
                     disabled={isLoading || !repoUrl}
-                    className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-lg shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/20 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white font-semibold rounded-lg shadow-lg shadow-blue-600/15 hover:shadow-blue-600/25 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     <Play className="w-4 h-4 fill-white" />
                     Analyze Codebase Stack
@@ -688,7 +708,7 @@ export default function AnalyzerPage() {
                 /* ── Chat Tab ────────────────────────────────────────── */
                 <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm space-y-6 hover:border-slate-300 dark:hover:border-slate-700 transition-colors duration-300">
                   <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
-                    <div className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                    <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg">
                       <Bot className="w-5 h-5" />
                     </div>
                     <div>
@@ -705,7 +725,7 @@ export default function AnalyzerPage() {
                         onChange={(e) => setPromptInput(e.target.value)}
                         placeholder="e.g., Should I use Next.js Server Actions or Route Handlers for posting comments? / How can I structure a high-performance vector DB connection?"
                         rows={4}
-                        className="w-full px-4 py-3 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-300 text-sm resize-none"
+                        className="w-full px-4 py-3 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-sm resize-none"
                         disabled={isChatLoading}
                         required
                       />
@@ -713,7 +733,7 @@ export default function AnalyzerPage() {
                     <button
                       type="submit"
                       disabled={isChatLoading || !promptInput}
-                      className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-lg shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/20 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 text-sm"
+                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 text-white font-semibold rounded-lg shadow-lg shadow-blue-600/15 hover:shadow-blue-600/25 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 text-sm"
                     >
                       {isChatLoading ? (
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -733,13 +753,13 @@ export default function AnalyzerPage() {
                 <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm space-y-4">
                   <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 border-2 border-indigo-605 dark:border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="w-2.5 h-2.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                       {progressMsg}
                     </span>
                     <span>Processing...</span>
                   </div>
                   <div className="h-1 bg-slate-200 dark:bg-slate-950 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 w-3/4 rounded-full animate-pulse" />
+                    <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 w-3/4 rounded-full animate-pulse" />
                   </div>
                 </div>
               )}
@@ -764,7 +784,7 @@ export default function AnalyzerPage() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-1">3. AI Insights Pipeline</h4>
-                      <p>Send clean stack details to Gemini 3.5 Flash to synthesize development suggestions, design observations, and migrations.</p>
+                      <p>Send clean stack details to Gemini 3.8 Flash to synthesize development suggestions, design observations, and migrations.</p>
                     </div>
                   </div>
                 ) : (
@@ -800,7 +820,7 @@ export default function AnalyzerPage() {
                 className="space-y-3"
               >
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400 flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-purple-650 dark:text-purple-400" />
+                  <Terminal className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                   Expert Response
                 </div>
 
@@ -847,7 +867,7 @@ export default function AnalyzerPage() {
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-555 dark:text-slate-400">Detected Technologies</div>
                 <div className="flex flex-wrap gap-2">
                   {result.detectedStack.map((tech) => (
-                    <span key={tech} className="px-3 py-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-indigo-650 dark:text-indigo-400 text-xs font-semibold rounded-lg">
+                    <span key={tech} className="px-3 py-1 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-lg">
                       {tech}
                     </span>
                   ))}
@@ -856,7 +876,7 @@ export default function AnalyzerPage() {
 
               <div className="space-y-3">
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-555 dark:text-slate-400 flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-purple-650 dark:text-purple-400" />
+                  <Terminal className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                   Gemini Synthesis Insights
                 </div>
                 <div className="p-4 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm leading-relaxed text-slate-750 dark:text-slate-300 font-mono whitespace-pre-line">

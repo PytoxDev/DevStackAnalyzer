@@ -17,11 +17,15 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router   = useRouter();
   const [user, setUser]         = useState<SupabaseUser | null>(null);
+  const [isGuest, setIsGuest]   = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    const guestFlag = localStorage.getItem('devstack_guest') === 'true';
+    setIsGuest(guestFlag);
+
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ?? null);
     });
@@ -53,16 +57,17 @@ export default function Sidebar() {
 
   const handleSignOut = async () => {
     setSigningOut(true);
+    localStorage.removeItem('devstack_guest');
     await supabase.auth.signOut();
     router.push('/login');
   };
 
-  /* Derive avatar initial from email */
-  const initial = user?.email ? user.email[0].toUpperCase() : null;
-  const displayEmail = user?.email ?? 'Authenticated User';
+  /* Derive avatar initial from email or guest */
+  const initial = isGuest ? 'G' : (user?.email ? user.email[0].toUpperCase() : null);
+  const displayEmail = isGuest ? 'Гостьовий сеанс (Guest)' : (user?.email ?? 'Authenticated User');
 
   return (
-    <aside className="w-64 border-r border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-900/30 backdrop-blur-xl pt-6 px-6 pb-20 hidden md:flex flex-col justify-between shrink-0 transition-colors duration-300">
+    <aside className="w-64 border-r border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-xl pt-6 px-6 pb-20 hidden md:flex flex-col justify-between shrink-0 transition-colors duration-300">
       {/* ── Top: logo + nav ── */}
       <div>
         {/* Logo */}
@@ -87,7 +92,7 @@ export default function Sidebar() {
                 href={href}
                 className={
                   active
-                    ? 'flex items-center gap-3 px-4 py-3 bg-indigo-650/10 text-indigo-600 dark:text-indigo-400 border-l-2 border-indigo-500 font-semibold text-sm rounded-r-lg transition-all'
+                    ? 'flex items-center gap-3 px-4 py-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 border-l-2 border-blue-500 font-semibold text-sm rounded-r-lg transition-all'
                     : 'flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-900/50 font-medium text-sm rounded-lg transition-all'
                 }
               >
@@ -115,7 +120,7 @@ export default function Sidebar() {
                 </>
               ) : (
                 <>
-                  <Moon className="w-4.5 h-4.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                  <Moon className="w-4.5 h-4.5 text-blue-500 dark:text-blue-400 shrink-0" />
                   <span>Dark Mode</span>
                 </>
               )}
@@ -131,7 +136,11 @@ export default function Sidebar() {
       <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800/60 mb-6">
         <div className="flex items-center gap-3 px-2 mb-3">
           {/* Avatar */}
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md shadow-indigo-500/20">
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md ${
+            isGuest 
+              ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 shadow-emerald-500/20' 
+              : 'bg-gradient-to-tr from-blue-600 to-cyan-500 shadow-blue-500/20'
+          }`}>
             {initial ?? <User className="w-4 h-4" />}
           </div>
 
@@ -140,15 +149,21 @@ export default function Sidebar() {
             <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate" title={displayEmail}>
               {displayEmail}
             </p>
-            <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Authenticated</p>
+            <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
+              {isGuest ? (
+                <span className="text-emerald-500 font-semibold">Гостьовий режим</span>
+              ) : (
+                'Authenticated'
+              )}
+            </p>
           </div>
 
           {/* Sign-out button */}
           <button
             onClick={handleSignOut}
             disabled={signingOut}
-            title="Sign out"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-200 cursor-pointer disabled:opacity-50 shrink-0"
+            title={isGuest ? "Вийти з гостьового режиму" : "Sign out"}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 cursor-pointer disabled:opacity-50 shrink-0"
           >
             {signingOut ? (
               <span className="w-4 h-4 border-2 border-slate-500 border-t-transparent rounded-full animate-spin block" />

@@ -39,12 +39,20 @@ const recentScans = [
 export default function DashboardPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
   const [dailyInsight, setDailyInsight] = useState<string>('Loading strategic daily insights...');
   const [authorIndex, setAuthorIndex] = useState(0);
-  const authorsText = ["Made by Korolchuk Illia", "Made by Pytox Developer", "Coursework Project"];
+  const authorsText = ["Made by Korolchuk Illia", "Made by Pytox Developer", "Practic Project"];
 
-  // ── Route guard ───────────────────────────────────────────────────────────
+  // ── Route guard (supports Supabase session and Guest mode) ───────────────────
   useEffect(() => {
+    const guestFlag = localStorage.getItem('devstack_guest') === 'true';
+    if (guestFlag) {
+      setIsGuest(true);
+      setAuthChecked(true);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
         router.replace('/login');
@@ -83,11 +91,11 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-slate-500 dark:text-slate-400">
-          <div className="p-4 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl border border-indigo-500/20">
-            <Lock className="w-8 h-8 text-indigo-500 dark:text-indigo-400 animate-pulse" />
+          <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+            <Lock className="w-8 h-8 text-blue-500 dark:text-blue-400 animate-pulse" />
           </div>
           <p className="text-sm font-medium tracking-wide">Securing workspace&hellip;</p>
-          <span className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     );
@@ -97,8 +105,6 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex font-sans transition-colors duration-300">
       {/* Sidebar navigation */}
       <Sidebar />
-      <div className="hidden">
-      </div>
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto">
@@ -111,14 +117,19 @@ export default function DashboardPage() {
             />
             <span className="font-bold text-md text-slate-900 dark:text-white">Dev-Stack</span>
           </div>
-          <div className="text-sm text-slate-500 dark:text-slate-400 hidden md:block">
-            Coursework Prototype &bull; <span className="text-indigo-600 dark:text-indigo-400 font-medium">Active Session</span>
+          <div className="text-sm text-slate-550 dark:text-slate-400 hidden md:block">
+            Practic Project &bull; <span className="text-blue-600 dark:text-blue-400 font-medium">{isGuest ? 'Guest Session' : 'Active Session'}</span>
           </div>
           
           <div className="flex items-center gap-4">
+            {isGuest && (
+              <span className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full hidden sm:inline-block">
+                Гостьовий режим (Non-saving)
+              </span>
+            )}
             <div className="flex items-center gap-2 p-1.5 px-3 bg-slate-200/60 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-full text-xs">
               <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-slate-700 dark:text-slate-300 font-medium">Gemini 3.5 Flash Connected</span>
+              <span className="text-slate-700 dark:text-slate-300 font-medium">Gemini 3.8 Flash Connected</span>
             </div>
           </div>
         </header>
@@ -135,7 +146,7 @@ export default function DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.4 }}
-                className="text-3xl font-extrabold tracking-tight text-[rgb(124,134,255)]"
+                className="text-3xl font-extrabold tracking-tight text-blue-500 dark:text-blue-400"
               >
                 {authorsText[authorIndex]}
               </motion.div>
@@ -143,30 +154,39 @@ export default function DashboardPage() {
           </div>
 
           {/* Welcome section */}
-          <div>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Dashboard</h2>
-            <p className="text-sm text-slate-550 dark:text-slate-400 mt-1">
-              Tech stack trends, scan metrics, and recent codebase analysis.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Workspace Overview</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Real-time tech stack intelligence, security benchmarks, and codebase telemetry.
+              </p>
+            </div>
+            <Link
+              href="/analyzer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all self-start md:self-auto cursor-pointer"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Start New Analysis
+            </Link>
           </div>
 
-          {/* AI Daily Analytics Insights widget card */}
-          <div className="relative p-6 bg-gradient-to-r from-indigo-100/40 via-purple-100/30 to-slate-100/40 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-slate-900/40 border border-indigo-200 dark:border-indigo-500/20 rounded-xl backdrop-blur-md shadow-2xl overflow-hidden group transition-colors duration-300">
+          {/* AI Daily Analytics Insights widget card (Blue to Teal gradient) */}
+          <div className="relative p-6 bg-gradient-to-r from-blue-950/20 via-slate-900/60 to-emerald-950/20 border border-blue-900/40 dark:border-blue-500/20 rounded-2xl backdrop-blur-md shadow-2xl overflow-hidden group transition-colors duration-300">
             {/* Decorative subtle glows */}
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/15 transition-all duration-500" />
-            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/15 transition-all duration-500" />
+            <div className="absolute -right-10 -top-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-500/15 transition-all duration-500" />
+            <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-500" />
             
             <div className="flex items-start gap-4 relative z-10">
-              <div className="p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg text-white shadow-md shadow-indigo-500/20">
+              <div className="p-3 bg-gradient-to-tr from-blue-600 to-emerald-600 rounded-xl text-white shadow-md shadow-blue-500/20">
                 <Sparkles className="w-5 h-5 animate-pulse" />
               </div>
               <div className="space-y-1.5 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-650 dark:text-indigo-400">
-                    AI Daily Analytics Insights
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                    AI Strategic Stack Insight
                   </h3>
-                  <span className="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/25 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300 rounded-full">
-                    Revalidated Daily
+                  <span className="px-2 py-0.5 bg-blue-500/10 border border-blue-500/25 text-[10px] font-semibold text-blue-600 dark:text-blue-300 rounded-full">
+                    Auto-Refreshed Daily
                   </span>
                 </div>
                 <p className="text-slate-700 dark:text-slate-200 text-sm font-medium leading-relaxed max-w-4xl">
@@ -176,74 +196,143 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* Stat 1 */}
-            <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm hover:border-slate-350 dark:hover:border-slate-700 transition-colors duration-300">
-              <div className="flex justify-between items-start text-slate-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">Total Scans Run</span>
-                <span className="p-1 bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 rounded-lg"><GitBranch className="w-4 h-4" /></span>
+          {/* ── ASYMMETRIC UI GRID: 1 Prominent Hero Card + 2 Secondary Stats ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            
+            {/* HERO BLOCK: Spans 2 columns on large screens - High visual hierarchy */}
+            <div className="lg:col-span-2 p-7 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-black/80 border border-slate-800 rounded-2xl backdrop-blur-xl relative overflow-hidden shadow-2xl flex flex-col justify-between">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 right-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="p-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg">
+                      <GitBranch className="w-5 h-5" />
+                    </span>
+                    <div>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Architecture Health</span>
+                      <h4 className="text-base font-bold text-white">Production Stack Posture</h4>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-full flex items-center gap-1.5">
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    Optimal Security Rating
+                  </span>
+                </div>
+
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div>
+                    <span className="text-xs text-slate-400">Overall Security Score</span>
+                    <div className="text-3xl font-extrabold text-white mt-1 flex items-baseline gap-2">
+                      92.4%
+                      <span className="text-xs text-emerald-400 font-semibold">+1.8%</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1">Evaluated across 128 scans</p>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-slate-400">Total Codebases Audited</span>
+                    <div className="text-3xl font-extrabold text-white mt-1 flex items-baseline gap-2">
+                      128
+                      <span className="text-xs text-blue-400 font-semibold">+12%</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1">GitHub repos analyzed</p>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-slate-400">Gemini Invocations</span>
+                    <div className="text-3xl font-extrabold text-white mt-1 flex items-baseline gap-2">
+                      412
+                      <span className="text-xs text-emerald-400 font-semibold">100% OK</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1">Direct architecture queries</p>
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">128</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">+12%</span>
+
+              {/* Progress bar indicator */}
+              <div className="mt-8 pt-6 border-t border-slate-800/80">
+                <div className="flex justify-between text-xs text-slate-400 mb-2">
+                  <span>Stack Modernity & Compliance Index</span>
+                  <span className="text-blue-400 font-semibold">88 / 100 benchmark</span>
+                </div>
+                <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                  <div className="h-full bg-gradient-to-r from-blue-600 via-teal-500 to-emerald-500 w-[88%] rounded-full" />
+                </div>
               </div>
             </div>
 
-            {/* Stat 2 */}
-            <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm hover:border-slate-350 dark:hover:border-slate-700 transition-colors duration-300">
-              <div className="flex justify-between items-start text-slate-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">Avg Security Score</span>
-                <span className="p-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg"><ShieldAlert className="w-4 h-4" /></span>
+            {/* SECONDARY ASYMMETRIC COLUMN (1 Col): Stacked compact telemetry cards */}
+            <div className="flex flex-col gap-4 justify-between">
+              
+              {/* Secondary Card 1 */}
+              <div className="p-5 bg-white/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 rounded-2xl backdrop-blur-sm hover:border-slate-700 transition-colors flex-1 flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tracked Technologies</span>
+                  <span className="p-1.5 bg-blue-500/10 text-blue-500 rounded-lg">
+                    <TrendingUp className="w-4 h-4" />
+                  </span>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-slate-900 dark:text-white">34</span>
+                  <span className="text-xs text-emerald-500 font-semibold">Active Frameworks</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">React, Next.js, FastAPI, Rust & PostgreSQL lead adoption</p>
               </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">92.4%</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">+1.8%</span>
+
+              {/* Secondary Card 2 */}
+              <div className="p-5 bg-white/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 rounded-2xl backdrop-blur-sm hover:border-slate-700 transition-colors flex-1 flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">System Telemetry</span>
+                  <span className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-slate-900 dark:text-white">0.42s</span>
+                  <span className="text-xs text-emerald-500 font-semibold">Avg Latency</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Real-time LLM streaming & AST parse pipeline online</p>
               </div>
+
             </div>
 
-            {/* Stat 3 */}
-            <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm hover:border-slate-350 dark:hover:border-slate-700 transition-colors duration-300">
-              <div className="flex justify-between items-start text-slate-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">AI API Requests</span>
-                <span className="p-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-lg"><Sparkles className="w-4 h-4" /></span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">412</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">this month</span>
-              </div>
-            </div>
-
-            {/* Stat 4 */}
-            <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm hover:border-slate-350 dark:hover:border-slate-700 transition-colors duration-300">
-              <div className="flex justify-between items-start text-slate-500 dark:text-slate-400">
-                <span className="text-xs font-semibold uppercase tracking-wider">Tracked Techs</span>
-                <span className="p-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg"><TrendingUp className="w-4 h-4" /></span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-900 dark:text-white">34</span>
-                <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">Active</span>
-              </div>
-            </div>
           </div>
 
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Chart 1: Area chart — min-h prevents Recharts -1 width/height warning */}
-            <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm transition-colors duration-300">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400 mb-6">
-                Monthly Analysis Volume
-              </h3>
+            {/* Chart 1: Area chart */}
+            <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl backdrop-blur-sm transition-colors duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Monthly Analysis Volume
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Execution count per calendar month</p>
+                </div>
+                <span className="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg">
+                  <GitBranch className="w-4 h-4" />
+                </span>
+              </div>
               <div className="w-full aspect-video min-h-0">
                 <TrendChart data={trendData} />
               </div>
             </div>
 
             {/* Chart 2: Language breakdown */}
-            <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm transition-colors duration-300">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400 mb-6">
-                Most Common Languages Detected
-              </h3>
+            <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl backdrop-blur-sm transition-colors duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Detected Language Distribution
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Normalized share across analyzed repositories</p>
+                </div>
+                <span className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                  <TrendingUp className="w-4 h-4" />
+                </span>
+              </div>
               <div className="w-full aspect-video min-h-0">
                 <LanguageShareChart data={languageData} />
               </div>
@@ -251,12 +340,15 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Scans Table */}
-          <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm transition-colors duration-300">
+          <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl backdrop-blur-sm transition-colors duration-300">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Recent Codebase Scans
-              </h3>
-              <Link href="/history" className="text-xs text-indigo-650 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Recent Codebase Scans
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">Most recent audit benchmarks</p>
+              </div>
+              <Link href="/history" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 flex items-center gap-1 font-medium">
                 View all history
                 <ArrowUpRight className="w-3 h-3" />
               </Link>
@@ -276,7 +368,7 @@ export default function DashboardPage() {
                   {recentScans.map((scan) => (
                     <tr key={scan.id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/20 transition-colors">
                       <td className="py-4 font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                        <span className="w-2 h-2 bg-indigo-500 rounded-full" />
+                        <span className="w-2 h-2 bg-blue-500 rounded-full" />
                         {scan.repo}
                       </td>
                       <td className="py-4">
@@ -284,7 +376,7 @@ export default function DashboardPage() {
                           {scan.stack.map((tech) => (
                             <span 
                               key={tech} 
-                              className="px-2 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-full font-medium"
+                              className="px-2.5 py-0.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs rounded-full font-medium"
                             >
                               {tech}
                             </span>

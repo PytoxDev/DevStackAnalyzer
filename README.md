@@ -47,108 +47,109 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 Shows the outer boundary of the **Dev-Stack Analyzer** system and every external actor or third-party service it communicates with.
 
+## Architectural Diagrams
+
+### 1. C4 System Context Diagram
+
 ```mermaid
-C4Context
-    title System Context: Dev-Stack Analyzer
+flowchart TD
+    %% Styling Definitions
+    classDef person fill:#08427b,stroke:#052e56,color:#fff
+    classDef system fill:#1168bd,stroke:#0b4884,color:#fff
+    classDef external fill:#999999,stroke:#6b6b6b,color:#fff
 
-    Person(user, "Developer / User", "An authenticated developer who submits GitHub repository URLs or plain-text architecture questions to analyze their tech stack.")
+    %% Actors
+    User["Regular User\n[Person]\nDeveloper or Startup Founder seeking tech stack insights."]:::person
+    Admin["System Administrator\n[Person]\nManages system configurations and monitors usage."]:::person
+    
+    %% Core System
+    System["Dev-Stack Analyzer\n[Software System]\nIntelligent web application providing tech stack analysis and trends."]:::system
+    
+    %% External Systems
+    GitHub["GitHub API\n[External System]\nProvides repository data and source code context."]:::external
+    Gemini["Gemini 3.5 Flash API\n[External System]\nProvides AI-driven analysis and insights."]:::external
 
-    System_Boundary(devstack, "Dev-Stack Analyzer") {
-        System(app, "Dev-Stack Analyzer App", "A Next.js 16 full-stack web application providing GitHub repository scanning, AI-powered architectural consulting, and persistent analysis history.")
-    }
-
-    System_Ext(github, "GitHub Public API", "REST API v3. Serves repository root directory trees and raw manifest file contents (package.json, requirements.txt, go.mod, Cargo.toml, etc.) over HTTPS.")
-    System_Ext(gemini, "Google Gemini API", "google/genai SDK. LLM inference engine (gemini-3.5-flash) that performs structural audits and returns structured JSON architectural reports.")
-    System_Ext(supabase, "Supabase Cloud", "Managed PostgreSQL database with built-in GoTrue JWT authentication. Stores user sessions and the analysis_history table.")
-
-    Rel(user, app, "Submits repo URL or text prompt", "HTTPS / Browser")
-    Rel(app, github, "Fetches /repos/:owner/:repo/contents and raw manifest download_urls", "HTTPS REST + User-Agent header + optional Bearer token")
-    Rel(app, gemini, "Sends structured scan prompt or consultant query", "HTTPS / google-genai SDK / responseMimeType: application/json")
-    Rel(app, supabase, "Reads/writes analysis_history rows; verifies JWT session", "HTTPS REST / Supabase JS SDK / NEXT_PUBLIC_ANON_KEY")
-    Rel(supabase, user, "Issues and validates JWT session tokens", "GoTrue Auth")
+    %% Relationships
+    User -- "Analyzes tech stacks using" --> System
+    Admin -- "Manages and monitors" --> System
+    System -- "Fetches repository data from" --> GitHub
+    System -- "Sends context and receives insights from" --> Gemini
 ```
 
 ---
 
-### Level 2 — Container Diagram
-
-Zooms into the system boundary to reveal the three runtime containers and the precise data flows between them, including JWT propagation and the singleton client enforcement implemented to resolve `GoTrueClient` storage-key conflicts.
+### 2. C4 Container Diagram
 
 ```mermaid
-C4Container
-    title Container Diagram: Dev-Stack Analyzer
+flowchart TD
+    %% Styling Definitions
+    classDef person fill:#08427b,stroke:#052e56,color:#fff
+    classDef container fill:#438dd5,stroke:#2e6295,color:#fff
+    classDef external fill:#999999,stroke:#6b6b6b,color:#fff
+    classDef boundary fill:none,stroke:#444,stroke-width:2px,stroke-dasharray: 5 5
 
-    Person(user, "Developer / User", "Authenticated via Supabase GoTrue JWT.")
+    %% External Actors
+    User["Regular User\n[Person]"]:::person
+    Admin["System Administrator\n[Person]"]:::person
 
-    System_Boundary(devstack, "Dev-Stack Analyzer — Next.js 16 (Turbopack)") {
+    %% System Boundary
+    subgraph SystemBoundary ["Dev-Stack Analyzer System"]
+        direction TB
+        Frontend["Next.js Frontend\n[Container: Next.js App Router, React, TS]\nProvides the user interface, analytics charts (Recharts), and styling (Tailwind CSS)."]:::container
+        API["Serverless API\n[Container: Next.js Route Handlers]\nHandles business logic, AI proxying via @google/genai SDK, and external API orchestration."]:::container
+        Supabase["Supabase BaaS\n[Container: PostgreSQL, Auth]\nHandles user authentication and serves as the primary database."]:::container
+    end
 
-        Container(browser, "Browser Application", "Next.js Client Components, React 19, Tailwind CSS v4, Framer Motion, Recharts, ReactMarkdown", "Renders the Sidebar, Dashboard, Stack Analyzer, History, and Login pages. All pages are protected by a useEffect route-guard that calls supabase.auth.getSession(). Uses a single shared supabase client instance exported from lib/supabase.ts to prevent multiple GoTrueClient storage-key conflicts.")
+    %% External Systems
+    GitHub["GitHub API\n[External System]"]:::external
+    Gemini["Gemini 3.5 Flash API\n[External System]"]:::external
 
-        Container(server, "Backend API Server", "Next.js Route Handlers (Node.js runtime on Vercel Edge / Lambda)", "Hosts two API routes: POST /api/analyze (GitHub scan + Gemini analysis pipeline with circuit-breaker fallback) and GET /api/insight (ISR-cached daily tip revalidated every 24h). Server-side env vars GEMINI_API_KEY and GITHUB_TOKEN are never exposed to the browser.")
-
-        Container(db, "Supabase Cloud", "PostgreSQL 15 + GoTrue Auth + Row-Level Security", "Hosts the analysis_history table (columns: id uuid gen_random_uuid() PK, user_id uuid FK, repository_url text, detected_stack jsonb, ai_insights text, analyzed_at timestamptz). RLS policies ensure each user can only SELECT their own rows. Primary keys are auto-generated — no client-supplied IDs to prevent 409 conflicts.")
-    }
-
-    System_Ext(github, "GitHub Public API", "REST v3")
-    System_Ext(gemini, "Google Gemini API", "gemini-3.5-flash")
-
-    Rel(user, browser, "Interacts with UI pages", "HTTPS / Browser")
-    Rel(browser, server, "POSTs repositoryUrl or promptText; GETs /api/insight", "HTTPS JSON fetch()")
-    Rel(browser, db, "Auth session check (getSession / getUser); INSERT into analysis_history", "HTTPS via singleton supabase client — NEXT_PUBLIC_ANON_KEY injected at build time")
-    Rel(server, github, "GET /repos/:owner/:repo/contents — User-Agent: Dev-Stack-Analyzer-App — optional Authorization: Bearer GITHUB_TOKEN", "HTTPS REST")
-    Rel(server, gemini, "generateContent() with responseMimeType: application/json — GEMINI_API_KEY (server-only env var)", "HTTPS / google-genai SDK")
-    Rel(db, browser, "Returns user-scoped rows; validates JWT on every request", "HTTPS REST + RLS")
+    %% Relationships
+    User -- "Visits and interacts with\n[HTTPS]" --> Frontend
+    Admin -- "Manages system via\n[HTTPS]" --> Frontend
+    
+    Frontend -- "Authenticates users via\n[HTTPS/Supabase SDK]" --> Supabase
+    Frontend -- "Requests analysis & data\n[HTTPS/JSON]" --> API
+    
+    API -- "Reads/Writes data\n[PostgreSQL/HTTPS]" --> Supabase
+    API -- "Fetches repo metadata\n[HTTPS/REST]" --> GitHub
+    API -- "Generates AI insights\n[HTTPS via @google/genai SDK]" --> Gemini
+    
+    class SystemBoundary boundary
 ```
 
 ---
 
-### Level 3 — Component Diagram: Analyzer Core
-
-Zooms into the `/app/api/analyze` Route Handler and the `/app/analyzer` Client Component, mapping every internal sub-component and the precise data-transformation pipeline from raw user input to committed PostgreSQL rows.
+### 3. Entity Relationship Diagram (ERD)
 
 ```mermaid
-C4Component
-    title Component Diagram: Analyzer Core (/app/api/analyze + /app/analyzer)
-
-    Container_Boundary(browser_comp, "Browser — /app/analyzer/page.tsx (Client Component)") {
-        Component(routeGuard, "Route Guard", "useEffect + supabase.auth.getSession()", "Runs on mount. If no valid JWT session is found, immediately redirects to /login. Prevents unauthenticated access without server middleware.")
-        Component(repoScanUI, "Repository Scan Panel", "React state: repoUrl, depth, targetAreas, isLoading, progressMsg, result", "Collects GitHub URL input, depth setting, and audit targets. Triggers triggerAnalysis() on form submit. Shows a 5-step animated progress sequence before the fetch resolves.")
-        Component(consultPanel, "AI Consultant Panel", "React state: promptInput, consultResponse, isChatLoading", "Accepts plain-text architecture questions. Dispatches POST /api/analyze with { promptText }. Title is safe-truncated to 45 characters before Supabase insertion to avoid oversized payloads.")
-        Component(historyWriter, "History Persistence Layer", "supabase.from('analysis_history').insert()", "Called inside both triggerAnalysis() and handleChatSubmit() after every successful or fallback response. Payload is strictly: { user_id, repository_url, detected_stack, ai_insights } with NO manual id field — letting gen_random_uuid() prevent 409 conflicts. Uses the singleton import { supabase } from @/lib/supabase.")
-        Component(vizLayer, "Visualization Layer", "Recharts: BarChart, LineChart + ReactMarkdown + remark-gfm", "Renders techBreakdownData as a bar chart and popularityTrendData as a multi-line trend chart. Markdown AI reports are rendered with a full custom component map (table, code blocks with copy button, headings, lists).")
+erDiagram
+    users_profiles {
+        uuid id PK
+        string email
+        string role "User | Admin"
+        string full_name
+        timestamp created_at
     }
 
-    Container_Boundary(server_comp, "Server — /app/api/analyze/route.ts (Route Handler)") {
-        Component(urlParser, "URL Parser and Validator", "RegExp: /github\\.com\\/([a-zA-Z0-9\\-]+)\\/([a-zA-Z0-9\\-\\._]+)/i", "Extracts owner and repo from the submitted string. Strips .git suffix. Returns 400 Bad Request immediately if the URL does not match the pattern. Runs before any network I/O.")
-        Component(manifestScanner, "GitHub Manifest Scanner", "native fetch() + User-Agent header + optional Bearer token", "Fetches /repos/:owner/:repo/contents. Maps root entries to a fileTree string. Filters for known manifest filenames (package.json, requirements.txt, go.mod, Cargo.toml, Gemfile, pnpm-lock.yaml, yarn.lock, package-lock.json). Downloads raw content of each via download_url, capped at 5000 characters per file.")
-        Component(llmEngine, "LLM Parsing Engine", "GoogleGenAI SDK — gemini-3.5-flash — responseMimeType: application/json", "Sends the combined fileTree and manifestContents in a structured scanPrompt. Receives a raw JSON string and parses it into { detectedStack, securityScore, aiInsights, recommendations, markdownResponse, techBreakdownData, popularityTrendData }.")
-        Component(circuitBreaker, "Circuit Breaker and Fallback", "try/catch wrapping GitHub fetch + try/catch wrapping Gemini call", "Layer 1: If GitHub API returns non-2xx (rate limit, private repo), sets isSimulated=true and switches to a fallbackPrompt asking Gemini to estimate. Layer 2: If the Gemini call or JSON.parse() throws, returns getMockAnalysis() static JSON — guaranteeing the API never returns 500 to the client.")
-        Component(promptRouter, "Prompt Mode Router", "if (promptText) branch vs repositoryUrl branch", "If the request body contains promptText (consultant mode), bypasses GitHub scanning entirely and routes directly to the LLM with the consultant systemInstruction. Enforces domain-limiting (non-IT keyword filter applied in mock mode). If repositoryUrl is provided, enters the full scan pipeline.")
+    analysis_history {
+        uuid id PK
+        uuid user_id FK
+        string repository_url
+        jsonb detected_stack
+        text ai_insights
+        timestamp analyzed_at
     }
 
-    Container_Ext(supabase_ext, "Supabase PostgreSQL", "analysis_history table")
-    Container_Ext(github_ext, "GitHub Public API", "REST v3")
-    Container_Ext(gemini_ext, "Gemini API", "gemini-3.5-flash")
+    global_tech_trends {
+        uuid id PK
+        string technology_name
+        int trend_score
+        text trend_direction
+        timestamp last_updated
+    }
 
-    Rel(routeGuard, repoScanUI, "Unlocks UI after session confirmed")
-    Rel(routeGuard, consultPanel, "Unlocks UI after session confirmed")
-    Rel(repoScanUI, server_comp, "POST /api/analyze { repositoryUrl, depth, targets }", "fetch() HTTPS JSON")
-    Rel(consultPanel, server_comp, "POST /api/analyze { promptText }", "fetch() HTTPS JSON")
-    Rel(repoScanUI, historyWriter, "Passes finalResult after API response (race-condition safe: uses fresh API data, not stale state)")
-    Rel(consultPanel, historyWriter, "Passes finalResponse after API response (title truncated to 45 chars)")
-    Rel(historyWriter, supabase_ext, "INSERT { user_id, repository_url, detected_stack jsonb, ai_insights } — no id field", "Supabase SDK HTTPS")
-    Rel(repoScanUI, vizLayer, "Passes result for report rendering")
-    Rel(consultPanel, vizLayer, "Passes consultResponse for chart and markdown rendering")
-
-    Rel(promptRouter, urlParser, "Routes to scan pipeline if repositoryUrl present")
-    Rel(promptRouter, llmEngine, "Routes directly to LLM if promptText present")
-    Rel(urlParser, manifestScanner, "Passes validated owner + repo strings")
-    Rel(manifestScanner, github_ext, "GET /repos/:owner/:repo/contents + download_url fetches", "HTTPS + User-Agent")
-    Rel(manifestScanner, llmEngine, "Passes fileTree + manifestContents strings")
-    Rel(manifestScanner, circuitBreaker, "Triggers isSimulated=true on GitHub API failure")
-    Rel(circuitBreaker, llmEngine, "Switches to fallbackPrompt if GitHub unavailable")
-    Rel(llmEngine, gemini_ext, "generateContent() with structured JSON schema prompt", "google-genai SDK HTTPS")
-    Rel(llmEngine, circuitBreaker, "Falls back to getMockAnalysis() on parse error")
+    users_profiles ||--o{ analysis_history : "performs"
 ```
 
 ---

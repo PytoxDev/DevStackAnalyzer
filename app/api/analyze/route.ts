@@ -36,26 +36,44 @@ export async function POST(request: Request) {
       if (!apiKey) {
         return NextResponse.json(getMockPromptResponse(promptText));
       }
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: promptText,
-        config: {
-          systemInstruction: systemInstruction,
-          responseMimeType: 'application/json',
-        }
-      });
-
-      const rawText = response.text || '';
       try {
-        const parsed = JSON.parse(rawText.trim());
-        return NextResponse.json({
-          markdownResponse: parsed.markdownResponse || rawText,
-          techBreakdownData: parsed.techBreakdownData || null,
-          popularityTrendData: parsed.popularityTrendData || null,
-        });
-      } catch {
-        return NextResponse.json({ markdownResponse: rawText, techBreakdownData: null, popularityTrendData: null });
+        const ai = new GoogleGenAI({ apiKey });
+        let response;
+        try {
+          response = await ai.models.generateContent({
+            model: 'gemini-3.8-flash',
+            contents: promptText,
+            config: {
+              systemInstruction: systemInstruction,
+              responseMimeType: 'application/json',
+            }
+          });
+        } catch (modelErr: any) {
+          // If gemini-3.8-flash experiences temporary 503 high demand or unavailability, fallback to gemini-3.1-flash-lite
+          response = await ai.models.generateContent({
+            model: 'gemini-3.1-flash-lite',
+            contents: promptText,
+            config: {
+              systemInstruction: systemInstruction,
+              responseMimeType: 'application/json',
+            }
+          });
+        }
+
+        const rawText = response.text || '';
+        try {
+          const parsed = JSON.parse(rawText.trim());
+          return NextResponse.json({
+            markdownResponse: parsed.markdownResponse || rawText,
+            techBreakdownData: parsed.techBreakdownData || null,
+            popularityTrendData: parsed.popularityTrendData || null,
+          });
+        } catch {
+          return NextResponse.json({ markdownResponse: rawText, techBreakdownData: null, popularityTrendData: null });
+        }
+      } catch (geminiError: any) {
+        console.warn('Gemini API call failed for promptText, falling back to mock response:', geminiError?.message || geminiError);
+        return NextResponse.json(getMockPromptResponse(promptText));
       }
     }
 
@@ -198,13 +216,24 @@ Return raw JSON only, no markdown wrapping.
 
     try {
       const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: isSimulated ? fallbackPrompt : scanPrompt,
-        config: {
-          responseMimeType: 'application/json'
-        }
-      });
+      let response;
+      try {
+        response = await ai.models.generateContent({
+          model: 'gemini-3.8-flash',
+          contents: isSimulated ? fallbackPrompt : scanPrompt,
+          config: {
+            responseMimeType: 'application/json'
+          }
+        });
+      } catch (scanErr: any) {
+        response = await ai.models.generateContent({
+          model: 'gemini-3.1-flash-lite',
+          contents: isSimulated ? fallbackPrompt : scanPrompt,
+          config: {
+            responseMimeType: 'application/json'
+          }
+        });
+      }
 
       const responseText = response.text || '';
       const parsedData = JSON.parse(responseText.trim());
