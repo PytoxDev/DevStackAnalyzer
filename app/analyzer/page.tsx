@@ -331,18 +331,21 @@ export default function AnalyzerPage() {
 
   // ── Route guard ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const guestFlag = localStorage.getItem('devstack_guest') === 'true';
-    if (guestFlag) {
-      setIsGuest(true);
-      setAuthChecked(true);
-      return;
-    }
-
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace('/login');
-      } else {
+      if (data.session) {
+        setIsGuest(false);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('devstack_guest');
+        }
         setAuthChecked(true);
+      } else {
+        const guestFlag = localStorage.getItem('devstack_guest') === 'true';
+        if (guestFlag) {
+          setIsGuest(true);
+          setAuthChecked(true);
+        } else {
+          router.replace('/login');
+        }
       }
     });
   }, [router]);

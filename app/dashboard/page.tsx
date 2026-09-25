@@ -46,18 +46,21 @@ export default function DashboardPage() {
 
   // ── Route guard (supports Supabase session and Guest mode) ───────────────────
   useEffect(() => {
-    const guestFlag = localStorage.getItem('devstack_guest') === 'true';
-    if (guestFlag) {
-      setIsGuest(true);
-      setAuthChecked(true);
-      return;
-    }
-
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace('/login');
-      } else {
+      if (data.session) {
+        setIsGuest(false);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('devstack_guest');
+        }
         setAuthChecked(true);
+      } else {
+        const guestFlag = localStorage.getItem('devstack_guest') === 'true';
+        if (guestFlag) {
+          setIsGuest(true);
+          setAuthChecked(true);
+        } else {
+          router.replace('/login');
+        }
       }
     });
   }, [router]);
@@ -124,7 +127,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             {isGuest && (
               <span className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full hidden sm:inline-block">
-                Гостьовий режим (Non-saving)
+                Guest Mode (Non-saving)
               </span>
             )}
             <div className="flex items-center gap-2 p-1.5 px-3 bg-slate-200/60 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-full text-xs">

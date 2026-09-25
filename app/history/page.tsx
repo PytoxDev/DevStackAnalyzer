@@ -129,18 +129,21 @@ export default function HistoryPage() {
 
   // ── Route guard ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const guestFlag = localStorage.getItem('devstack_guest') === 'true';
-    if (guestFlag) {
-      setIsGuest(true);
-      setAuthChecked(true);
-      return;
-    }
-
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace('/login');
-      } else {
+      if (data.session) {
+        setIsGuest(false);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('devstack_guest');
+        }
         setAuthChecked(true);
+      } else {
+        const guestFlag = localStorage.getItem('devstack_guest') === 'true';
+        if (guestFlag) {
+          setIsGuest(true);
+          setAuthChecked(true);
+        } else {
+          router.replace('/login');
+        }
       }
     });
   }, [router]);
@@ -373,7 +376,7 @@ export default function HistoryPage() {
             <div className="p-4 bg-blue-500/10 border border-blue-500/25 rounded-xl text-xs text-blue-600 dark:text-blue-300 flex items-center gap-3">
               <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0" />
               <span>
-                <strong>Гостьовий режим активний:</strong> ваші нові сканування не записуються до хмарної бази даних. Нижче відображено демонстраційні звіти для ознайомлення з форматом аналітики.
+                <strong>Guest Mode Active:</strong> Your scans and queries are not saved to the cloud database. Demo reports are displayed below to explore the analytical layout and metrics.
               </span>
             </div>
           )}

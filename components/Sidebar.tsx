@@ -23,11 +23,17 @@ export default function Sidebar() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const guestFlag = localStorage.getItem('devstack_guest') === 'true';
-    setIsGuest(guestFlag);
-
     supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user ?? null);
+      if (data.user) {
+        setUser(data.user);
+        setIsGuest(false);
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('devstack_guest');
+        }
+      } else {
+        const guestFlag = localStorage.getItem('devstack_guest') === 'true';
+        setIsGuest(guestFlag);
+      }
     });
 
     const storedTheme = localStorage.getItem('theme');
@@ -63,8 +69,8 @@ export default function Sidebar() {
   };
 
   /* Derive avatar initial from email or guest */
-  const initial = isGuest ? 'G' : (user?.email ? user.email[0].toUpperCase() : null);
-  const displayEmail = isGuest ? 'Гостьовий сеанс (Guest)' : (user?.email ?? 'Authenticated User');
+  const initial = (!user && isGuest) ? 'G' : (user?.email ? user.email[0].toUpperCase() : null);
+  const displayEmail = (!user && isGuest) ? 'Guest Session' : (user?.email ?? 'Authenticated User');
 
   return (
     <aside className="w-64 border-r border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-xl pt-6 px-6 pb-20 hidden md:flex flex-col justify-between shrink-0 transition-colors duration-300">
@@ -150,8 +156,8 @@ export default function Sidebar() {
               {displayEmail}
             </p>
             <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
-              {isGuest ? (
-                <span className="text-emerald-500 font-semibold">Гостьовий режим</span>
+              {(!user && isGuest) ? (
+                <span className="text-emerald-500 font-semibold">Guest Mode</span>
               ) : (
                 'Authenticated'
               )}
@@ -162,7 +168,7 @@ export default function Sidebar() {
           <button
             onClick={handleSignOut}
             disabled={signingOut}
-            title={isGuest ? "Вийти з гостьового режиму" : "Sign out"}
+            title={(!user && isGuest) ? "Exit Guest Mode" : "Sign out"}
             className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 cursor-pointer disabled:opacity-50 shrink-0"
           >
             {signingOut ? (

@@ -32,10 +32,16 @@ export default function LoginPage() {
       if (mode === 'signin') {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('devstack_guest');
+        }
         router.push('/dashboard');
       } else {
         const { error: authError } = await supabase.auth.signUp({ email, password });
         if (authError) throw authError;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('devstack_guest');
+        }
         setSuccess('Account created! Please check your email to confirm your address, then sign in.');
       }
     } catch (err: unknown) {
@@ -188,10 +194,10 @@ export default function LoginPage() {
             className="w-full py-3 px-4 bg-slate-950/90 hover:bg-slate-800/90 border border-slate-700/80 hover:border-emerald-500/50 text-slate-200 hover:text-emerald-400 font-medium text-sm rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md group"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500 group-hover:animate-ping" />
-            <span>Продовжити в гостьовому режимі (Guest Access)</span>
+            <span>Continue in Guest Mode (Guest Access)</span>
           </button>
           <p className="text-[11px] text-slate-500 text-center mt-2">
-            Вхід без авторизації. Історія ваших запитів не буде зберігатися.
+            No registration required. Your analysis history will not be saved.
           </p>
         </div>
 
