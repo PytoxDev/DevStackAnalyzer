@@ -21,7 +21,8 @@ import {
   Bot,
   Send,
   FlaskConical,
-  Lock
+  Lock,
+  Menu
 } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
@@ -77,7 +78,7 @@ function EvidenceTooltip({ active, payload }: any) {
     return (
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs shadow-xl transition-colors duration-300">
         <p className="text-slate-900 dark:text-white font-semibold mb-0.5">{data.tech}</p>
-        <p className="text-indigo-650 dark:text-indigo-400 font-bold">{data.percentage}% Share</p>
+        <p className="text-blue-600 dark:text-blue-400 font-bold">{data.percentage}% Share</p>
       </div>
     );
   }
@@ -162,7 +163,7 @@ function MarkdownContent({ text }: { text: string }) {
                       Copy
                     </button>
                   </div>
-                  <pre className="p-4 overflow-x-auto text-indigo-705 dark:text-indigo-300 bg-slate-100/50 dark:bg-slate-950/90 font-mono">
+                  <pre className="p-4 overflow-x-auto text-blue-600 dark:text-blue-300 bg-slate-100/50 dark:bg-slate-950/90 font-mono">
                     <code className="font-mono">{codeText}</code>
                   </pre>
                 </div>
@@ -221,8 +222,8 @@ function ArchitectureEvidencePanel({
     >
       {/* Panel header */}
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-3">
-        <div className="p-1.5 bg-indigo-500/10 rounded-md">
-          <FlaskConical className="w-4 h-4 text-indigo-650 dark:text-indigo-400" />
+        <div className="p-1.5 bg-blue-500/10 rounded-md">
+          <FlaskConical className="w-4 h-4 text-blue-600 dark:text-blue-400" />
         </div>
         <div>
           <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Architecture Insights</h4>
@@ -349,6 +350,9 @@ export default function AnalyzerPage() {
       }
     });
   }, [router]);
+
+  // Mobile navigation drawer state
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Chat / Consultant state
   const [promptInput, setPromptInput] = useState('');
@@ -575,36 +579,53 @@ export default function AnalyzerPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex font-sans transition-colors duration-300">
-      {/* Sidebar */}
-      <Sidebar />
+      {/* Sidebar navigation */}
+      <Sidebar 
+        mobileOpen={mobileNavOpen} 
+        onMobileClose={() => setMobileNavOpen(false)} 
+      />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Header */}
-        <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md transition-colors duration-300">
-          <div className="flex items-center gap-2 md:hidden">
-            <img 
-              src="/DevStack.png" 
-              alt="DevStack Logo" 
-              className="w-8 h-8 rounded-lg object-contain" 
-            />
-            <span className="font-bold text-md text-slate-900 dark:text-white">Dev-Stack</span>
+        <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-4 sm:px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md transition-colors duration-300 shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="md:hidden p-2 -ml-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-900/60 rounded-lg transition-colors cursor-pointer"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <img 
+                src="/DevStack.png" 
+                alt="DevStack Logo" 
+                className="w-7 h-7 rounded-lg object-contain" 
+              />
+              <span className="font-bold text-base text-slate-900 dark:text-white">Dev-Stack</span>
+            </div>
           </div>
+
           <div className="text-sm text-slate-550 dark:text-slate-400 hidden md:block">
             Stack Analysis Engine &bull; <span className="text-blue-600 dark:text-blue-400 font-medium">Gemini-Powered</span>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 p-1.5 px-3 bg-slate-200/60 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-full text-xs text-slate-700 dark:text-slate-300">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full" />
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               <span>Analyzer Online</span>
             </div>
           </div>
         </header>
 
         {/* Body */}
-        <div className="p-8 max-w-7xl w-full mx-auto space-y-8">
+        <div className="p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Stack Analyzer</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Stack Analyzer</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Provide a repository URL to scan dependencies, estimate security posture, and generate AI insights.
             </p>
@@ -617,7 +638,7 @@ export default function AnalyzerPage() {
             <div className={`${!hasResult ? 'lg:col-span-2' : ''} space-y-6`}>
 
               {/* Tab selector */}
-              <div className="flex p-1 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg w-fit transition-colors duration-300">
+              <div className="flex flex-wrap p-1 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg w-full sm:w-fit gap-1 transition-colors duration-300">
                 <button
                   type="button"
                   onClick={() => setActiveTab('scan')}
@@ -650,20 +671,20 @@ export default function AnalyzerPage() {
                         value={repoUrl}
                         onChange={(e) => setRepoUrl(e.target.value)}
                         placeholder="https://github.com/username/repository"
-                        className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-300"
+                        className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
                         disabled={isLoading}
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400 mb-2">Analysis Depth</label>
                       <select
                         value={depth}
                         onChange={(e) => setDepth(e.target.value)}
-                        className="w-full px-3.5 py-3 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-350 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all duration-300 text-sm"
+                        className="w-full px-3.5 py-3 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-350 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300 text-sm"
                         disabled={isLoading}
                       >
                         <option value="quick">Quick Scan</option>
@@ -682,7 +703,7 @@ export default function AnalyzerPage() {
 
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-555 dark:text-slate-400 mb-3">Target Audit Areas</label>
-                    <div className="grid grid-cols-2 gap-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       {(['dependencies', 'codeQuality', 'licenses', 'secrets'] as const).map((area) => (
                         <label key={area} className="flex items-center gap-3 p-3 bg-slate-100/30 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 rounded-lg hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-200/20 dark:hover:bg-slate-900/10 transition-colors cursor-pointer select-none">
                           <input
@@ -772,7 +793,7 @@ export default function AnalyzerPage() {
             {!hasResult && (
               <div className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm space-y-6 h-fit hover:border-slate-300 dark:hover:border-slate-700 transition-colors duration-300">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-800 dark:text-slate-300 flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-indigo-650 dark:text-indigo-400" />
+                  <Settings className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   How it works
                 </h3>
                 {activeTab === 'scan' ? (
@@ -837,7 +858,7 @@ export default function AnalyzerPage() {
 
                   {/* Right Column: Interactive Charts Panel (1/3 width) */}
                   {hasCharts && (
-                    <div className="lg:col-span-1 bg-slate-900/40 border border-slate-800/80 rounded-xl p-6 backdrop-blur-sm sticky top-24">
+                    <div className="lg:col-span-1 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 sm:p-6 backdrop-blur-sm sticky top-24">
                       <ArchitectureEvidencePanel
                         techBreakdownData={consultResponse.techBreakdownData!}
                         popularityTrendData={consultResponse.popularityTrendData}

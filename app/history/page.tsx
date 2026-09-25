@@ -10,7 +10,8 @@ import {
   X,
   FileText,
   ShieldCheck,
-  Lock
+  Lock,
+  Menu
 } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
@@ -48,7 +49,7 @@ function MarkdownContent({ text }: { text: string }) {
             <thead className="bg-slate-200/85 dark:bg-slate-800/80 text-slate-750 dark:text-slate-300">{children}</thead>
           ),
           th: ({ children }: any) => (
-            <th className="px-4 py-2.5 font-semibold text-indigo-600 dark:text-indigo-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">{children}</th>
+            <th className="px-4 py-2.5 font-semibold text-blue-600 dark:text-blue-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">{children}</th>
           ),
           td: ({ children }: any) => (
             <td className="px-4 py-2.5 text-slate-750 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800/60 text-xs">{children}</td>
@@ -93,7 +94,7 @@ function MarkdownContent({ text }: { text: string }) {
                       Copy
                     </button>
                   </div>
-                  <pre className="p-3 overflow-x-auto text-indigo-705 dark:text-indigo-300 bg-slate-100/50 dark:bg-slate-950/90 font-mono">
+                  <pre className="p-3 overflow-x-auto text-blue-600 dark:text-blue-300 bg-slate-100/50 dark:bg-slate-950/90 font-mono">
                     <code className="font-mono">{codeText}</code>
                   </pre>
                 </div>
@@ -126,6 +127,7 @@ export default function HistoryPage() {
   
   const [historyList, setHistoryList] = useState<HistoricalScan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // ── Route guard ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -336,25 +338,41 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex font-sans transition-colors duration-300">
       {/* Sidebar navigation */}
-      <Sidebar />
+      <Sidebar 
+        mobileOpen={mobileNavOpen} 
+        onMobileClose={() => setMobileNavOpen(false)} 
+      />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header */}
-        <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md">
-          <div className="flex items-center gap-2 md:hidden">
-            <img 
-              src="/DevStack.png" 
-              alt="DevStack Logo" 
-              className="w-8 h-8 rounded-lg object-contain" 
-            />
-            <span className="font-bold text-md">Dev-Stack</span>
+        <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-4 sm:px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="md:hidden p-2 -ml-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-900/60 rounded-lg transition-colors cursor-pointer"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <img 
+                src="/DevStack.png" 
+                alt="DevStack Logo" 
+                className="w-7 h-7 rounded-lg object-contain" 
+              />
+              <span className="font-bold text-base text-slate-900 dark:text-white">Dev-Stack</span>
+            </div>
           </div>
+
           <div className="text-sm text-slate-550 dark:text-slate-400 hidden md:block">
             Historical Scan Registers &bull; <span className="text-blue-600 dark:text-blue-400 font-semibold">Total Scans: {historyList.length}</span>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2 p-1.5 px-3 bg-slate-200/65 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-full text-xs">
               <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               <span className="text-slate-700 dark:text-slate-350">{isGuest ? 'Guest Session' : 'History Sync Active'}</span>
@@ -363,9 +381,9 @@ export default function HistoryPage() {
         </header>
 
         {/* Page Body */}
-        <div className="p-8 max-w-5xl w-full mx-auto space-y-8">
+        <div className="p-4 sm:p-8 max-w-5xl w-full mx-auto space-y-6 sm:space-y-8">
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Analysis History</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Analysis History</h2>
             <p className="text-sm text-slate-550 dark:text-slate-400 mt-1">
               Browse, search, and review detailed reports for previously executed repository stack analyses.
             </p>
@@ -382,7 +400,7 @@ export default function HistoryPage() {
           )}
 
           {/* Search/Filter Toolbar */}
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
             <div className="relative w-full md:max-w-md">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                 <Search className="w-4 h-4" />
@@ -414,9 +432,9 @@ export default function HistoryPage() {
                 {filteredHistory.map((scan) => (
                   <div 
                     key={scan.id} 
-                    className="p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+                    className="p-4 sm:p-6 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl backdrop-blur-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6"
                   >
-                    <div className="space-y-3 flex-1">
+                    <div className="space-y-3 flex-1 min-w-0">
                       <div className="flex items-center gap-2.5">
                         <h3 className="font-bold text-lg text-slate-900 dark:text-white leading-tight break-all md:break-normal">{scan.repo}</h3>
                         {scan.url && (
@@ -424,7 +442,7 @@ export default function HistoryPage() {
                             href={scan.url} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="text-slate-400 hover:text-slate-655 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+                            className="text-slate-400 hover:text-slate-655 dark:text-slate-500 dark:hover:text-slate-300 transition-colors shrink-0"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </a>
@@ -448,7 +466,7 @@ export default function HistoryPage() {
                         })}
                       </div>
 
-                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-4 text-xs text-slate-550 dark:text-slate-400">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" />
                           {scan.date}
@@ -483,13 +501,13 @@ export default function HistoryPage() {
 
           {/* Modal / Report Dialog */}
           {selectedScan && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/60">
+                <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/60">
                   <div>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Detailed Analysis Report</span>
-                    <h3 className="font-bold text-xl text-slate-900 dark:text-white mt-1 break-all pr-4">{selectedScan.repo}</h3>
+                    <h3 className="font-bold text-lg sm:text-xl text-slate-900 dark:text-white mt-1 break-all pr-4">{selectedScan.repo}</h3>
                   </div>
                   <button 
                     onClick={() => setSelectedScan(null)}
@@ -500,8 +518,8 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm text-slate-700 dark:text-slate-300">
-                  <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-850 rounded-lg">
+                <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-sm text-slate-700 dark:text-slate-300">
+                  <div className="flex justify-between items-center p-3 sm:p-4 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-850 rounded-lg">
                     <span className="text-slate-550 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Metrics</span>
                     <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold rounded-lg flex items-center gap-1.5 text-xs">
                       <ShieldCheck className="w-4 h-4" />
@@ -553,7 +571,7 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex justify-end">
+                <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex justify-end">
                   <button 
                     onClick={() => setSelectedScan(null)}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-lg cursor-pointer transition-colors"

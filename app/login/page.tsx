@@ -62,7 +62,7 @@ export default function LoginPage() {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Glassmorphic Container */}
-      <div className="relative z-10 w-full max-w-md p-8 mx-4 bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl">
+      <div className="relative z-10 w-full max-w-md p-6 sm:p-8 mx-4 bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl">
 
         {/* Branding header */}
         <div className="flex flex-col items-center mb-8">

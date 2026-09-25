@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShieldAlert, Sparkles, TrendingUp, ArrowUpRight, GitBranch, Lock } from 'lucide-react';
+import { ShieldAlert, Sparkles, TrendingUp, ArrowUpRight, GitBranch, Lock, Menu } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
 
@@ -40,6 +40,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [dailyInsight, setDailyInsight] = useState<string>('Loading strategic daily insights...');
   const [authorIndex, setAuthorIndex] = useState(0);
   const authorsText = ["Made by Korolchuk Illia", "Made by Pytox Developer", "Practic Project"];
@@ -106,61 +107,68 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex font-sans transition-colors duration-300">
-      {/* Sidebar navigation */}
-      <Sidebar />
+      {/* Sidebar navigation (supports sticky desktop and mobile drawer) */}
+      <Sidebar 
+        mobileOpen={mobileNavOpen} 
+        onMobileClose={() => setMobileNavOpen(false)} 
+      />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
-        <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md transition-colors duration-300">
-          <div className="flex items-center gap-2 md:hidden">
-            <img 
-              src="/DevStack.png" 
-              alt="DevStack Logo" 
-              className="w-8 h-8 rounded-lg object-contain" 
-            />
-            <span className="font-bold text-md text-slate-900 dark:text-white">Dev-Stack</span>
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header className="h-16 border-b border-slate-200 dark:border-slate-900 px-4 sm:px-8 flex items-center justify-between bg-slate-100/50 dark:bg-slate-950/50 backdrop-blur-md transition-colors duration-300 shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="md:hidden p-2 -ml-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-900/60 rounded-lg transition-colors cursor-pointer"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 md:hidden">
+              <img 
+                src="/DevStack.png" 
+                alt="DevStack Logo" 
+                className="w-7 h-7 rounded-lg object-contain" 
+              />
+              <span className="font-bold text-base text-slate-900 dark:text-white">Dev-Stack</span>
+            </div>
           </div>
+
           <div className="text-sm text-slate-550 dark:text-slate-400 hidden md:block">
             Practic Project &bull; <span className="text-blue-600 dark:text-blue-400 font-medium">{isGuest ? 'Guest Session' : 'Active Session'}</span>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {isGuest && (
               <span className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full hidden sm:inline-block">
                 Guest Mode (Non-saving)
               </span>
             )}
-            <div className="flex items-center gap-2 p-1.5 px-3 bg-slate-200/60 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-full text-xs">
-              <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-slate-700 dark:text-slate-300 font-medium">Gemini 3.8 Flash Connected</span>
+            <div className="flex items-center gap-2 p-1.5 px-2.5 sm:px-3 bg-slate-200/60 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-full text-[11px] sm:text-xs">
+              <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 bg-emerald-500 rounded-full animate-pulse shrink-0" />
+              <span className="text-slate-700 dark:text-slate-300 font-medium truncate max-w-[140px] sm:max-w-none">Gemini 3.8 Flash Connected</span>
             </div>
           </div>
         </header>
 
         {/* Dashboard Grid Container */}
-        <div className="p-8 max-w-7xl w-full mx-auto space-y-8">
+        <div className="p-4 sm:p-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
           
-          {/* ── Authorship Animation ────────────────────────────────────── */}
-          <div className="w-full flex justify-start text-left mb-2 relative h-[44px]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={authorIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
-                className="text-3xl font-extrabold tracking-tight text-blue-500 dark:text-blue-400"
-              >
-                {authorsText[authorIndex]}
-              </motion.div>
-            </AnimatePresence>
+          {/* ── Authorship Banner ────────────────────────────────────── */}
+          <div className="w-full flex justify-start text-left">
+            <span className="text-xs sm:text-sm font-bold tracking-wider uppercase text-blue-500 dark:text-blue-400 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">
+              {authorsText[authorIndex]}
+            </span>
           </div>
 
           {/* Welcome section */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Workspace Overview</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Workspace Overview</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Real-time tech stack intelligence, security benchmarks, and codebase telemetry.
               </p>
             </div>
@@ -174,7 +182,7 @@ export default function DashboardPage() {
           </div>
 
           {/* AI Daily Analytics Insights widget card (Blue to Teal gradient) */}
-          <div className="relative p-6 bg-gradient-to-r from-blue-950/20 via-slate-900/60 to-emerald-950/20 border border-blue-900/40 dark:border-blue-500/20 rounded-2xl backdrop-blur-md shadow-2xl overflow-hidden group transition-colors duration-300">
+          <div className="relative p-5 sm:p-6 bg-gradient-to-r from-blue-950/20 via-slate-900/60 to-emerald-950/20 border border-blue-900/40 dark:border-blue-500/20 rounded-2xl backdrop-blur-md shadow-2xl overflow-hidden group transition-colors duration-300">
             {/* Decorative subtle glows */}
             <div className="absolute -right-10 -top-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-500/15 transition-all duration-500" />
             <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-500" />

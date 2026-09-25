@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BarChart3, History, LayoutDashboard, LogOut, User, Sun, Moon } from 'lucide-react';
+import { BarChart3, History, LayoutDashboard, LogOut, User, Sun, Moon, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -13,7 +13,12 @@ const navItems = [
   { href: '/history',    label: 'Analysis History', icon: History },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export default function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps = {}) {
   const pathname = usePathname();
   const router   = useRouter();
   const [user, setUser]         = useState<SupabaseUser | null>(null);
@@ -72,20 +77,32 @@ export default function Sidebar() {
   const initial = (!user && isGuest) ? 'G' : (user?.email ? user.email[0].toUpperCase() : null);
   const displayEmail = (!user && isGuest) ? 'Guest Session' : (user?.email ?? 'Authenticated User');
 
-  return (
-    <aside className="w-64 border-r border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-xl pt-6 px-6 pb-20 hidden md:flex flex-col justify-between shrink-0 transition-colors duration-300">
-      {/* ── Top: logo + nav ── */}
-      <div>
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <img 
-            src="/DevStack.png" 
-            alt="DevStack Logo" 
-            className="w-8 h-8 rounded-lg object-contain" 
-          />
-          <span className="font-extrabold text-lg bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
-            Dev-Stack
-          </span>
+  const sidebarContent = (
+    <div className="w-64 h-full flex flex-col justify-between p-6 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-xl border-r border-slate-200 dark:border-slate-900 transition-colors duration-300">
+      {/* ── Top: logo + mobile close + nav ── */}
+      <div className="flex-1 overflow-y-auto pr-1">
+        {/* Logo and Mobile Close */}
+        <div className="flex items-center justify-between gap-3 mb-8 px-1">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/DevStack.png" 
+              alt="DevStack Logo" 
+              className="w-8 h-8 rounded-lg object-contain shadow-sm" 
+            />
+            <span className="font-extrabold text-lg bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 dark:from-white dark:to-slate-400 bg-clip-text text-transparent">
+              Dev-Stack
+            </span>
+          </div>
+
+          {/* Close button for mobile drawer */}
+          <button
+            type="button"
+            onClick={onMobileClose}
+            className="md:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-900/60 transition-colors cursor-pointer"
+            aria-label="Close navigation menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Nav links */}
@@ -96,6 +113,7 @@ export default function Sidebar() {
               <Link
                 key={href}
                 href={href}
+                onClick={onMobileClose}
                 className={
                   active
                     ? 'flex items-center gap-3 px-4 py-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 border-l-2 border-blue-500 font-semibold text-sm rounded-r-lg transition-all'
@@ -179,6 +197,31 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* ── Desktop: Fixed/Sticky full-height sidebar ── */}
+      <aside className="hidden md:block w-64 h-screen sticky top-0 shrink-0 z-30">
+        {sidebarContent}
+      </aside>
+
+      {/* ── Mobile: Sliding Drawer with Backdrop Overlay ── */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop blur */}
+          <div 
+            onClick={onMobileClose} 
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-300"
+            aria-hidden="true"
+          />
+          {/* Drawer container */}
+          <div className="relative z-50 h-full shadow-2xl animate-in slide-in-from-left duration-200">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
